@@ -8,6 +8,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import glob
 from scipy.fft import fft, ifft, fftfreq
+import scipy
+import scipy.signal as signal
 from mne.preprocessing import (ICA, create_eog_epochs, create_ecg_epochs,
                                corrmap)
 import nf_tools
@@ -415,6 +417,54 @@ def mk_epochs_new(meg,  mod_freq=None, tmin=None, tmax=None, baseline=None, anno
     epoch = mne.Epochs(meg, events=events4epoch, tmin=tmin, tmax=tmax, baseline=baseline)
     return epoch
 
+
+def calc_itc(sig, sfreq):
+    """
+    This function computes ITPC from epoched time series
+
+    Args:
+        sig: epochs x channels x time points
+        sfreq: sampling frequency
+        
+    Returns:
+        itpc: Inter-trial phase coherence.
+    """
+    nepoch, nchan, ntp = sig.shape
+    sig = np.reshape(sig, (-1, ntp))  # convert epochs @ channels @ time-points to  (epochs . channels) @ time-points
+    nfft = ntp
+    xwin = signal.windows.hann(ntp).reshape(1, -1)
+    #plt.plot(xwin)
+    sig = sig * xwin
+    #plt.plot(sig)
+
+    # Compute FFT
+    F = scipy.fft.fft(sig)
+    xfreq = np.arange(nfft/2) * (sfreq/nfft)
+    #xf = fftfreq(ntp, 1/sfreq)[:ntp//2]
+    #plt.plot(xfreq, np.abs(F[0,:ntp//2]))
+
+    # Compute power, amplitude, and phase spectra
+    AS = 2/xwin.sum() * np.sqrt(F*np.conjugate(F))  # amplitude spectrum
+    S = F * np.conjugate(F) / xwin.sum()  # Power spectrum
+    P = np.arctan(np.imag(F) / np.real(F))  # Phase spectrum
+
+    # shorten matrix by half
+    AS = AS[:, :ntp//2]
+    S = S[:, :ntp//2]
+    P = P[:, :ntp//2]
+    F = F[:, :ntp//2]
+
+    # Reshape Fourier matrix to its to initial shape
+    F = F.reshape((nepoch, nchan, ntp//2))
+
+    # inter-trial phase coherence
+    itpc = np.squeeze(np.abs(np.mean(F/np.abs(F), axis=0)))  # Channel 68
+    # evoked power
+    epow = np.squeeze(np.abs(np.mean(F, axis=0)) ** 2)
+    # total power
+    tpow = np.squeeze(np.mean(np.abs(F) ** 2, axis=0))
+
+    return itpc, xfreq, epow, tpow, F
 
 
 # Unity tests
