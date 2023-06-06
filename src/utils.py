@@ -6,7 +6,8 @@ import subprocess
 import glob
 import mne
 import pandas as pd
-from nf_tools import preprocessing as prep
+from .preprocessing import *
+
 
 
 def du(path):
@@ -121,7 +122,7 @@ def cat_cp_meg_blocks(src, dest, name_pattern):
             files_size.append(fsize)
             raw = mne.io.read_raw_ctf(directory=fnames[jfile])
             trig_sig = raw['UPPT001'][0]
-            trigger_vals = prep.find_events_frequency(trig_sig)
+            trigger_vals = find_events_frequency(trig_sig)
             is_smt = False
             is_nf = False
             if float('200.0') in trigger_vals.keys():
@@ -174,12 +175,43 @@ def cat_cp_meg_blocks(src, dest, name_pattern):
     print("list of copied/renamed files:")
     os.system(f"ls -lh {dest}*/")
 
-def status(subj_ids=range(1, 29), subjs_dir=None):
+
+def status_subj(subj_id):
+    """
+    
+    """
+    subj_name = f"subj_{subj_id}"
+    subjs_path = "datasets/data/"
+    subj_path = os.path.join(subjs_path, subj_name)
+
+    meg_raw_ds, meg_rawfif, mri_raw, meg_blocks_fif, meg_concat_fif, meg_after_ica_fif = ([] for i in range(6))
+    meg_raw_other_ds, meg_raw_smt, meg_raw_triggermismatch = [], [], []
+    #print(os.listdir(subj_path))
+    meg_raw_ds.append(len(glob.glob(os.path.join(subj_path, 'meg', '*.ds'))))
+    meg_raw_other_ds.append(len(glob.glob(os.path.join(subj_path, 'other_meg', '*.ds'))))
+    meg_raw_smt.append(len(glob.glob(os.path.join(subj_path, 'meg_smt', '*.ds'))))
+    meg_raw_triggermismatch.append(len(glob.glob(os.path.join(subj_path, 'trigger_mismatch_meg', '*.ds'))))
+
+    meg_rawfif.append(len(glob.glob(os.path.join(subj_path, 'meg', '*raw.fif'))))
+    meg_blocks_fif.append(len(glob.glob(os.path.join(subj_path, 'meg', 'block_*meg.fif'))))
+    meg_concat_fif.append(len(glob.glob(os.path.join(subj_path, 'meg', 'concat_meg*fif'))))
+    meg_after_ica_fif.append(len(glob.glob(os.path.join(subj_path, 'meg', 'after_ica*fif'))))
+    mri_raw.append(len(glob.glob(os.path.join(subj_path, 'mri', '*/*.dcm'))))
+
+    T = {'megRawds': meg_raw_ds, 'megRawfif': meg_rawfif, 
+         'megBlocksfif': meg_blocks_fif, 'megConcat': meg_concat_fif, 'megAfterIca': meg_after_ica_fif,
+         'meg_smt': meg_raw_smt, 'megRawOther': meg_raw_other_ds,'megRawTrigger':meg_raw_triggermismatch, 
+         'mri_raw': mri_raw}
+    return pd.DataFrame(T)
+
+
+def status(subj_ids, subjs_dir):
     """
     This function will print the status of analysis. e.g. what files are ready or which analysis done!
 
     args:
-        subjs_dir: Default is '/hpc/workspace/2021-0292-NeuroFlex/prj_neuroflex/data/'
+        subj_id
+        subjs_dir
 
     Returns:
         A pandas data frame containing the information about the analysis
@@ -259,6 +291,92 @@ def cp_raw_mri(subj_ids, src=None, dst=None):
             print(f"   ***  MRI file for {_shortname} is already copied!  ***")
 
 
+    
+def annotate_blocks(subjs_dir, subj_id, stim_channel = 'UPPT001', write=True):
+    """
+    This function annotates the MEG data for each block using the behavioral data. 
+    It compares the modulating frequencies, correct responses, and the time of recording between the MEG trigger and behavioral data.
 
-#if __name__ == '__main__':
+    Args:
+        subjs_dir (str): path to the directory containing the subjects data. This directory should contain a folder named "behav_data"
+          containing the behavioral data for all subjects. And a folder for each subject containing the MEG data.
+        subj_id (int): subject id
+
+    Returns:
+        None
+    """
+    subj_name = f'subj_{subj_id}'
+    
+    meg_dir = os.path.join(subjs_dir, subj_name, 'meg')
+    behav_dir = os.path.join(subjs_dir, "behav_data", subj_name)
+    # load blocks info
+    meg_blocks_info = pd.read_csv(os.path.join(meg_dir, 'nf_blocks_info.csv'), header=0)
+    n_meg_blocks = meg_blocks_info.shape[0]
+    for block in range(1, n_meg_blocks+1):  # to include the last block as well
+        meg_block_name = meg_blocks_info.origname[block-1]
+        raw = mne.io.read_raw_ctf(os.path.join(meg_dir, meg_block_name))
+        events = mne.find_events(raw, stim_channel=stim_channel)
+
+        event_initial = np.array([0, 0, 1]).reshape((1, 3))  # to specify the time period before the first trigger!
+        events_new = np.concatenate((event_initial, events), axis=0)
+        events_onset_in_sec = events_new[:, 0] / raw.info['sfreq']  # Not included the last event
+
+        event_ending = np.array([raw.last_samp, 0, 2]).reshape((1, 3))  # to specify the time period after the last trigger!
+        events_new_appended = np.concatenate((events_new, event_ending), axis=0)
+        events_dur_in_sec = (events_new_appended[1:, 0] - events_new_appended[:-1, 0]) / raw.info[
+            'sfreq']  # The last events halps find the duration of events
+        events_correct_response = events[2::4, 2]
+        annots_correct_response = ['faster' if jev==24 else 'slower' for jev in events_correct_response]
+
+        # obtain fm values from MEG data
+        fms_trials_from_trigger_not_rounded = 8 / events_dur_in_sec[1::4]
+        fms_trials_from_trigger = np.round(fms_trials_from_trigger_not_rounded * 2)/2  # To round values to 1, 1.5, 2, ...
+        fms_from_trigger = np.tile(fms_trials_from_trigger.reshape((-1, 1)), (1, 4)).reshape((-1, 1)).ravel()
+        labels_fm = np.insert(fms_from_trigger, 0, float('nan'))
+
+        # obtain fm values from behav data
+        behav_block_info = pd.read_csv(os.path.join(behav_dir, f'block_{block}.csv'), header=0)
+        behav_correct_response = behav_block_info.correct_response.to_list()
+        fms_from_behav = behav_block_info.mod_freq.to_numpy()
+
+        assert np.all(fms_trials_from_trigger == fms_from_behav), f'Modulating frequencies do NOT match for block {block}'
+        assert_correct_response = [annots_correct_response[jev]==behav_correct_response[jev] for jev in range(len(annots_correct_response
+                                                                                                                  ))]
+        assert np.all(np.array(assert_correct_response)), f'The event for the correct response does not match  between behavioral and MEG'
+        # TO DO: Add recording time from Psychtoolbox and MEG and compare ...
+        #behav_block_info.block_start_datetime[0]
+        #meg_blocks_info.acqtime[0]
+
+        # Annotate using behavioral data
+        fms = behav_block_info.mod_freq.astype(str).tolist()
+        phie = behav_block_info.phase_enc.astype(int).astype(str).replace('3', 'pi')
+        phit = behav_block_info.phase_targ.astype(int).astype(str).replace('3', 'pi')
+        resp = behav_block_info.eval_response.astype(int).astype(str)
+        freq_match = behav_block_info.freq_match.astype(str)
+        events_ = ["/".join([fms[k],f'e{phie[k]}', f't{phit[k]}', f"{freq_match[k][0]}",f"r{resp[k]}"]) for k in range(len(fms))]
+        event_descs = [f"{j}/{events_[k]}" for k in range(len(events_)) for j in ['e', 'm', 't', 'bad_']]
+        event_descs.insert(0, 'bad_start')
+        # Apply annotations to block meg data
+        block_annots = mne.Annotations(onset=events_onset_in_sec,
+                                       duration=events_dur_in_sec,
+                                       description=event_descs,
+                                       orig_time=raw.info['meas_date'])
+        raw = raw.set_annotations(block_annots)
+
+        # Save the data for block
+        if write:
+            write_path = meg_dir
+            write_name = f"block_{block}" + "_raw.fif"  # common meg files should be saved in this format
+            raw.save(os.path.join(write_path, write_name), overwrite=True)
+    # Print list of files in meg directory
+    os.system(f"ls -lh {meg_dir}*/")
+
+
+
+
+
+
+if __name__ == '__main__':
+    import sys
+    print(sys.path)
     #  Add unit test

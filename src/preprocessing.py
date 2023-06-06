@@ -12,8 +12,8 @@ import scipy
 import scipy.signal as signal
 from mne.preprocessing import (ICA, create_eog_epochs, create_ecg_epochs,
                                corrmap)
-import nf_tools
-from nf_tools import utils
+
+from .utils import *
 
 
 def fix_ch_types(raw):
@@ -52,24 +52,26 @@ def filter_block(raw):
     return raw
 
 
-def preprocess_blocks(subj_id, analysis_dir=''):
+def preprocess_blocks(subj_id, data_path, plots_path, write=False):
     """ 
     This function loads all block files and notch filters at range(50, 300, 50), HP
     filters at 1 Hz and LP filters at 130 
     
-    Parameters:
-        subj_indx: Index of the subject to be preprocessed.
-        analysis_dir: set the analysis folder. All plots will be saved here.
+    Args:
+        subj_id: ID of the subject to be preprocessed (INT)
+        data_path: Output data will be saved in this directory.
+        plots_path: All plots will be saved here.
         
-    Returns: No output. Preprocessed files are saved in the following directory
-    /hpc/workspace/2021-0292-NeuroFlex/prj_neuroflex/data/
-        
+    Returns: 
+        No output. Preprocessed files are saved in the following directory
+     
     """
-    path = utils.set_dirs(subj_id, analysis_dir=analysis_dir)
-    subj_name = path['subj_id']
-    meg_dir = path['subj_meg_dir']
-    subj_analysis_dir = path['subj_analysis_dir']
-    prep_dir = path['prep_dir']
+
+    subj_name = f"subj_{subj_id}"
+    meg_dir = os.path.join(data_path, subj_name, 'meg')
+    prep_dir = os.path.join(plots_path, subj_name)
+    os.makedirs(meg_dir, exist_ok=True)
+    os.makedirs(prep_dir, exist_ok=True)
 
     # load blocks info
     meg_blocks_info = pd.read_csv(os.path.join(meg_dir, 'nf_blocks_info.csv'), header=0)
@@ -79,25 +81,28 @@ def preprocess_blocks(subj_id, analysis_dir=''):
         raw = mne.io.read_raw_fif(os.path.join(meg_dir, meg_block_name))
 
         # plot and save
-        fig = raw.plot_psd(fmax=160)
-        os.makedirs(os.path.join(prep_dir, 'psd_raw'), exist_ok=True)
-        fig.savefig(os.path.join(prep_dir, 'psd_raw', f'psd_block_{block}.jpg'))
+        if write:
+            fig = raw.plot_psd(fmax=160)
+            os.makedirs(os.path.join(prep_dir, 'psd_raw'), exist_ok=True)
+            fig.savefig(os.path.join(prep_dir, 'psd_raw', f'psd_block_{block}.jpg'))
         
         # Apply 3rd gradient compensation
         raw = raw.apply_gradient_compensation(grade=3, verbose=None)
         
         # plot and save
-        fig = raw.plot_psd(fmax=160)
-        os.makedirs(os.path.join(prep_dir, 'psd_3rd_grad'), exist_ok=True)
-        fig.savefig(os.path.join(prep_dir, 'psd_3rd_grad', f'psd_block_{block}.jpg'))
+        if write:
+            fig = raw.plot_psd(fmax=160)
+            os.makedirs(os.path.join(prep_dir, 'psd_3rd_grad'), exist_ok=True)
+            fig.savefig(os.path.join(prep_dir, 'psd_3rd_grad', f'psd_block_{block}.jpg'))
 
         # Filter block raw
         raw = filter_block(raw)
 
         # plot and save
-        fig = raw.plot_psd(fmax=160)
-        os.makedirs(os.path.join(prep_dir, 'psd_filtered'), exist_ok=True)
-        fig.savefig(os.path.join(prep_dir, 'psd_filtered', f'psd_block_{block}.jpg'))
+        if write:
+            fig = raw.plot_psd(fmax=160)
+            os.makedirs(os.path.join(prep_dir, 'psd_filtered'), exist_ok=True)
+            fig.savefig(os.path.join(prep_dir, 'psd_filtered', f'psd_block_{block}.jpg'))
 
         # Pick MEG (Gradiometers) channels & Trigger channels.
         #indx_good_channels = np.where(np.isin(raw.get_channel_types(), ['mag', 'stim']))[0]
@@ -108,35 +113,39 @@ def preprocess_blocks(subj_id, analysis_dir=''):
         # Resample data to 300 Hz
         meg = meg.resample(300)
 
-        fig = raw.plot_psd(fmax=150)
-        os.makedirs(os.path.join(prep_dir, 'psd_filtered_downsampled'), exist_ok=True)
-        fig.savefig(os.path.join(prep_dir, 'psd_filtered_downsampled', f'psd_block_{block}.jpg'))
-        plt.close('all')
+        if write:
+            fig = raw.plot_psd(fmax=150)
+            os.makedirs(os.path.join(prep_dir, 'psd_filtered_downsampled'), exist_ok=True)
+            fig.savefig(os.path.join(prep_dir, 'psd_filtered_downsampled', f'psd_block_{block}.jpg'))
+            plt.close('all')
         
-        fig = raw.plot_psd(fmax=40)
-        os.makedirs(os.path.join(prep_dir, 'psd_filtered_downsampled'), exist_ok=True)
-        fig.savefig(os.path.join(prep_dir, 'psd_filtered_downsampled', f'psd_block_{block}_40hz.jpg'))
-        plt.close('all')
+            fig = raw.plot_psd(fmax=40)
+            os.makedirs(os.path.join(prep_dir, 'psd_filtered_downsampled'), exist_ok=True)
+            fig.savefig(os.path.join(prep_dir, 'psd_filtered_downsampled', f'psd_block_{block}_40hz.jpg'))
+            plt.close('all')
 
         # Save the data for block
-        if analysis_dir:
-            write_path = meg_dir
+        if write:
             write_name = f"block_{block}" + "_meg.fif"  # common meg files should be saved in this format
-            meg.save(os.path.join(write_path, write_name), overwrite=True)
+            meg.save(os.path.join(meg_dir, write_name), overwrite=True)
     # Print list of files in meg directory
     os.system(f"ls -lh {meg_dir}*/")
 
 
-def concat_blocks(subj_id, analysis_dir):
+def concat_blocks(subj_id, data_path, plots_path):
     """This function concatenates blocks"""
 
-    path = utils.set_dirs(subj_id=subj_id, analysis_dir=analysis_dir)
-    meg_dir = path['subj_meg_dir']
-    prep_dir = path['prep_dir']
+    subj_name = f"subj_{subj_id}"
+    meg_dir = data_path# os.path.join(data_path, subj_name, 'meg')
+    prep_dir = plots_path #os.path.join(plots_path, subj_name)
+    os.makedirs(prep_dir, exist_ok=True)
     
     # Search for clean (filtered, down-sampled, and noisy time span removed) data
     # and sort them based on their names, to get right order for concatenation
     block_fnames = sorted(glob.glob(os.path.join(meg_dir, "block*_meg.fif")))
+    print("--------------------------")
+    print(block_fnames)
+    print("--------------------------")
     
     # For concatenation use 'block_*_meg_tsrej.fif' if exists, otherwise use 'block_*meg.fif'
     blocks_all, blocks_all_fnames = [], []
@@ -168,8 +177,7 @@ def concat_blocks(subj_id, analysis_dir):
         
     # Save PSD of concatenated data
     fig1 = meg.plot_psd(fmax=150)
-    os.makedirs(os.path.join(prep_dir, 'psd_concatenated'), exist_ok=True)
-    fig1.savefig(os.path.join(prep_dir, 'psd_concatenated', 'psd.jpg'))
+    fig1.savefig(os.path.join(prep_dir, 'psd_concatenated.jpg'))
     plt.close('all')
 
 
@@ -231,10 +239,9 @@ def mk_epochs(meg, tmin, baseline, mod_freq, annot_pattern, new_event_value):
     return epoch
 
 
-def run_ica(subj_id, write=True, write_path='', overwrite=False):
+def run_ica(meg_dir, write=True, overwrite=False):
     
-    path = utils.set_dirs(subj_id=subj_id)
-    meg_dir = path['subj_meg_dir']
+
     meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'concat_meg.fif'))
     
     # Apply 1Hz HP filter before ICA
@@ -243,10 +250,8 @@ def run_ica(subj_id, write=True, write_path='', overwrite=False):
     ica = ICA(n_components=40, method='infomax', fit_params=dict(extended=True))
     ica.fit(meg)
     if write:
-        if not write_path:
-            ica.save(os.path.join(meg_dir, "matrix_ica.fif"))
-        else:
-            ica.save(os.path.join(write_path, "matrix_ica.fif"))
+        ica.save(os.path.join(meg_dir, "matrix_ica.fif"))
+
             
     # Print list of files in meg directory
     os.system(f"ls -lh {meg_dir}*/")
