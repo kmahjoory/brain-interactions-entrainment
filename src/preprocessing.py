@@ -52,15 +52,15 @@ def filter_block(raw):
     return raw
 
 
-def preprocess_blocks(subj_id, data_path, plots_path, write=False):
+def preprocess_blocks(subj_id, subjs_dir, plots_path, write=False):
     """ 
     This function loads all block files and notch filters at range(50, 300, 50), HP
     filters at 1 Hz and LP filters at 130 
     
     Args:
-        subj_id: ID of the subject to be preprocessed (INT)
-        data_path: Output data will be saved in this directory.
-        plots_path: All plots will be saved here.
+        subj_id (int): ID of the subject to be preprocessed 
+        subjs_dir (str):  Path to the directory where all subjects data are read from and stored in. 
+        plots_path: all output plots will be saved here.
         
     Returns: 
         No output. Preprocessed files are saved in the following directory
@@ -68,7 +68,7 @@ def preprocess_blocks(subj_id, data_path, plots_path, write=False):
     """
 
     subj_name = f"subj_{subj_id}"
-    meg_dir = os.path.join(data_path, subj_name, 'meg')
+    meg_dir = os.path.join(subjs_dir, subj_name, 'meg')
     prep_dir = os.path.join(plots_path, subj_name)
     os.makedirs(meg_dir, exist_ok=True)
     os.makedirs(prep_dir, exist_ok=True)

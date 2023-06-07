@@ -14,3 +14,7 @@ utils.cat_cp_meg_blocks(src='',
 ### Annotate blocks based on Behavioral data and MEG stimulus channel
 from src import utils
 utils.annotate_blocks(subjs_dir='datasets/data/', subj_id=25, write=True)
+
+###
+from src import preprocessing as prep
+prep.preprocess_blocks(subj_id=25, subjs_dir='datasets/data/', plots_path='datasets/plots/', write=True)
