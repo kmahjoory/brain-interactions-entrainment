@@ -132,12 +132,12 @@ def preprocess_blocks(subj_id, subjs_dir, plots_path, write=False):
     os.system(f"ls -lh {meg_dir}*/")
 
 
-def concat_blocks(subj_id, data_path, plots_path):
+def concat_blocks(subj_id, subjs_dir, plots_path):
     """This function concatenates blocks"""
 
     subj_name = f"subj_{subj_id}"
-    meg_dir = data_path# os.path.join(data_path, subj_name, 'meg')
-    prep_dir = plots_path #os.path.join(plots_path, subj_name)
+    meg_dir = os.path.join(subjs_dir, subj_name, 'meg')
+    prep_dir = os.path.join(plots_path, subj_name)
     os.makedirs(prep_dir, exist_ok=True)
     
     # Search for clean (filtered, down-sampled, and noisy time span removed) data
@@ -239,9 +239,10 @@ def mk_epochs(meg, tmin, baseline, mod_freq, annot_pattern, new_event_value):
     return epoch
 
 
-def run_ica(meg_dir, write=True, overwrite=False):
+def run_ica(subj_id, subjs_dir, write=True, overwrite=False):
     
-
+    subj_name = f"subj_{subj_id}"
+    meg_dir = os.path.join(subjs_dir, subj_name, 'meg')
     meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'concat_meg.fif'))
     
     # Apply 1Hz HP filter before ICA
