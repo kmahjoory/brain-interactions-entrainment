@@ -65,28 +65,114 @@ def calc_bem_solution(subj_id, datasets_path):
 
 
 
-def mk_fwd_model(subj_idx):
-    
-    paths = set_mri_dirs(subj_idx)
-    
+def viz_head_model(subj_id, datasets_path):
+    """
+    """
+
+    subj_name = f'subj_{subj_id}'
+    mri_dir = os.path.join(datasets_path, 'data', subj_name, 'mri')
+    meg_dir = os.path.join(datasets_path, 'data', subj_name, 'meg')
+    fs_subjs_dir = os.path.join(datasets_path, 'data/fs_subjects_dir')
+    plots_dir = os.path.join(datasets_path, 'plots', subj_name)
+
     # Read source files
-    fpath_src = os.path.join(paths['subj_fs_dir'], 'source/file-src.fif')
+    fpath_src = os.path.join(fs_subjs_dir, subj_name, 'source/file-src.fif')
+    src = mne.read_source_spaces(fpath_src)
+
+    # Read BEM Solution
+    bem_solution = mne.read_bem_solution(os.path.join(mri_dir, 'bem_sol.h5'))
+
+    # Read MEG info
+    meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
+    info = meg.info
+
+    # Load the transformation matrix
+    trans = mne.read_trans(os.path.join(mri_dir, 'trans' , 'meg_mri-trans.fif'))
+
+    # Vizualize the head model after coregistration (source space, BEM surfaces, MEG sensors)
+    plot_kwargs = dict(subject=subj_name, subjects_dir=fs_subjs_dir,
+                    surfaces=["head", 'white'], dig=True, eeg=[], src=src,
+                    meg='sensors', show_axes=True,
+                    coord_frame='meg')
+    fig1 = mne.viz.plot_alignment(info, trans=trans, **plot_kwargs)
+    fig1.background_color = (1, 1, 1)
+    mne.viz.set_3d_view(fig1, 180, 90, distance=0.6, focalpoint=(0., 0., 0.))
+    img1 = fig1.plotter.image
+
+    fig2 = mne.viz.plot_alignment(info, trans=trans, **plot_kwargs)
+    fig2.background_color = (1, 1, 1)
+    mne.viz.set_3d_view(fig2, 270, 90, distance=0.6, focalpoint=(0., 0., 0.))
+    img2 = fig2.plotter.image
+
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+    ax[0].imshow(img1)
+    ax[1].imshow(img2)
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
+    ax[0].tick_params(axis='both', which='both', length=0)
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
+    ax[1].tick_params(axis='both', which='both', length=0)
+    os.makedirs(os.path.join(plots_dir , 'fm'), exist_ok=True)
+    fig.savefig(os.path.join(plots_dir , 'fm', 'fm_sens_surfs.jpg'))
+
+    # Plot Helmet
+    plot_kwargs = dict(subject=subj_name, subjects_dir=fs_subjs_dir,
+                    surfaces=["head", 'white'], dig=True, eeg=[], src=src,
+                    meg=['sensors', 'helmet'], show_axes=True,
+                    coord_frame='meg')
+    fig1 = mne.viz.plot_alignment(info, trans=trans, **plot_kwargs)
+    fig1.background_color = (1, 1, 1)
+    mne.viz.set_3d_view(fig1, 180, 90, distance=0.6, focalpoint=(0., 0., 0.))
+    img1 = fig1.plotter.image
+
+    fig2 = mne.viz.plot_alignment(info, trans=trans, **plot_kwargs)
+    fig2.background_color = (1, 1, 1)
+    mne.viz.set_3d_view(fig2, 270, 90, distance=0.6, focalpoint=(0., 0., 0.))
+    img2 = fig2.plotter.image
+
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6))
+    ax[0].imshow(img1)
+    ax[1].imshow(img2)
+    ax[0].set_xticks([])
+    ax[0].set_yticks([])
+    ax[0].tick_params(axis='both', which='both', length=0)
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
+    ax[1].tick_params(axis='both', which='both', length=0)
+    os.makedirs(os.path.join(plots_dir , 'fm'), exist_ok=True)
+    fig.savefig(os.path.join(plots_dir , 'fm', 'fm_sens_surfs_helmet.jpg'))
+
+
+
+def mk_fwd_model(subj_id, datasets_path):
+    """
+    """
+    subj_name = f'subj_{subj_id}'
+    mri_dir = os.path.join(datasets_path, 'data', subj_name, 'mri')
+    meg_dir = os.path.join(datasets_path, 'data', subj_name, 'meg')
+    fs_subjs_dir = os.path.join(datasets_path, 'data/fs_subjects_dir')
+    plots_dir = os.path.join(datasets_path, 'plots', subj_name)
+    
+    # Read source space file
+    fpath_src = os.path.join(fs_subjs_dir, subj_name, 'source/file-src.fif')
     src = mne.read_source_spaces(fpath_src)
     
     # Read BEM Solution
-    bem_solution = mne.read_bem_solution(os.path.join(paths['subj_mri_dir'], 'bem_solution.h5'))
-    
+    bem_solution = mne.read_bem_solution(os.path.join(mri_dir, 'bem_sol.h5'))
+
     # Read MEG info
-    meg = mne.io.read_raw_fif(os.path.join(paths['subj_meg_dir'], 'block_1_raw.fif'))
+    meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
     info = meg.info
-    
-    # Load the transformation matrix    
-    trans = mne.read_trans(os.path.join(paths['subj_trans_dir'], 'meg_mri-trans.fif'))
+
+    # Load the transformation matrix
+    trans = mne.read_trans(os.path.join(mri_dir, 'trans' , 'meg_mri-trans.fif'))
     
     # solve the Forward problem
     fwd = mne.make_forward_solution(info=info, trans=trans, src=src, bem=bem_solution, meg=True, eeg=False, mindist=0.0,
                                     ignore_ref=False, n_jobs=1)  
-    mne.write_forward_solution(os.path.join(paths['subj_mri_dir'], 'file-fwd.fif'), fwd, overwrite=True)
+    mne.write_forward_solution(os.path.join(mri_dir, 'file-fwd.fif'), fwd, overwrite=True)
+
     return fwd
     
 
