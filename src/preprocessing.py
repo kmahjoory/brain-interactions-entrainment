@@ -199,7 +199,7 @@ def find_events_frequency(trig_sig):
     return(dict(zip(events, event_freqs)))
 
 
-def mk_epochs(meg, tmin, baseline, mod_freq, annot_pattern, new_event_value):
+def mk_epochs(meg,  mod_freq=None, tmin=None, tmax=None, baseline=None, annot_pattern='', new_event_value=100):
     """This function creates epochs based on specified mod_freq and annotation_pattern
     Arguments:
         meg: annotated MNE object, where bad time spans are annotated as BAD_*
@@ -224,8 +224,8 @@ def mk_epochs(meg, tmin, baseline, mod_freq, annot_pattern, new_event_value):
         baseline = (0, 0), tmin = 0 sets to no baseline.
         baseline = (-0.5, 0), tmin = -0.5
     """
-    if not new_event_value:
-        new_event_value = 100
+    if not tmax:
+        tmax = (8 / mod_freq) - 1 / meg.info['sfreq']
     events = mne.events_from_annotations(meg)
     annot = list(events[1].keys())
     indx_pattern = np.where([annot_pattern in k for k in annot])[0].tolist()
@@ -235,7 +235,7 @@ def mk_epochs(meg, tmin, baseline, mod_freq, annot_pattern, new_event_value):
     events4epoch[:, 2] = new_event_value
     annot_epoch = mne.annotations_from_events(events4epoch, meg.info['sfreq'])
     meg.set_annotations(annot_epoch)
-    epoch = mne.Epochs(meg, events=events4epoch, tmin=tmin, tmax=(8/mod_freq)-1/meg.info['sfreq'], baseline=baseline)
+    epoch = mne.Epochs(meg, events=events4epoch, tmin=tmin, tmax=tmax, baseline=baseline)
     return epoch
 
 

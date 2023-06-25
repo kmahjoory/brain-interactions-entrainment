@@ -83,7 +83,10 @@ def viz_head_model(subj_id, datasets_path):
     bem_solution = mne.read_bem_solution(os.path.join(mri_dir, 'bem_sol.h5'))
 
     # Read MEG info
-    meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
+    if os.path.isfile(os.path.join(meg_dir, 'block_1_meg.fif')) == True:
+        meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
+    else:
+        meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'after_ica_meg.fif'))
     info = meg.info
 
     # Load the transformation matrix
@@ -162,7 +165,10 @@ def mk_fwd_model(subj_id, datasets_path):
     bem_solution = mne.read_bem_solution(os.path.join(mri_dir, 'bem_sol.h5'))
 
     # Read MEG info
-    meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
+    if os.path.isfile(os.path.join(meg_dir, 'block_1_meg.fif')) == True:
+        meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'block_1_meg.fif'))
+    else:
+        meg = mne.io.read_raw_fif(os.path.join(meg_dir, 'after_ica_meg.fif'))
     info = meg.info
 
     # Load the transformation matrix

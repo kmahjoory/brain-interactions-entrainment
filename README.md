@@ -75,12 +75,22 @@ for i in range(14, 15):
 
 
 # Check BEM surfaces and coregistration
-for i in range(25,29):
+for i in range(3,14):
     fm.viz_head_model(i, 'datasets')
 
 # Make forward model
 for i in range(15, 29):
     fm.mk_fwd_model(i, 'datasets')
+
+
+
+### SOURCE RECONSTRUCTION
+
+- should we do source recon separately on silence and entrainment?
+- how to calculate cov for different fms? as their length is not equal?
+- Implement both LCMV and MNE
+- WHICH SSD
+- Sensor space ITC and Source space ITC
 
 
 
