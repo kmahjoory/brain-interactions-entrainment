@@ -1,9 +1,19 @@
 
-import os, sys, glob
+import argparse
 
+my_parser = argparse.ArgumentParser()
+my_parser.add_argument('--subj_ids', action='store', type=int, nargs=2)
+my_parser.add_argument('--dim_red', action='store', type=str, nargs='*', default=['ssd', 'pca'])
+args = my_parser.parse_args()
+subjects_id = range(args.subj_ids[0], args.subj_ids[1]+1)
+dim_red = args.dim_red
+
+
+
+import os, sys, glob
 import numpy as np
 import matplotlib
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import scipy
 import scipy.signal as signal
 import mne
@@ -11,10 +21,15 @@ sys.path.append('../../')
 import src.preprocessing as prep
 from src.source_space import extract_label_tc
 
-dim_red = ['ssd', 'pca']
+print('#############################################')
+print('RUN specifications:')
+print(subjects_id)
+print(dim_red)
+print('#############################################')
+
 
 ### Set directories
-for subj_id in range(13, 14):
+for subj_id in subjects_id:
 
     condition = 'encoding'#'maintenance'
     condition_acr = 'e'#'m'
