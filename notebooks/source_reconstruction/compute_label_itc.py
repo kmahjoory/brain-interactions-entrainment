@@ -146,17 +146,17 @@ for subj_id in subjects_id:
         print(f"===> {fm} Hz done!")
 
 
-srcs_itc_dir_files = os.path.join(srcs_itc_dir, 'files')
-os.makedirs(srcs_itc_dir_files, exist_ok=True)
+    srcs_itc_dir_files = os.path.join(srcs_itc_dir, 'files')
+    os.makedirs(srcs_itc_dir_files, exist_ok=True)
 
-if 'ssd' in dim_red:
-    for j, _fm in enumerate(np.arange(1, 4.4, 0.5)):
-        np.save(os.path.join(srcs_itc_dir_files, f'itpc_{condition}_{_fm}_ssd.npy'), itpc_ssd[j], allow_pickle=True)
-        np.save(os.path.join(srcs_itc_dir_files, f'xfreq_{condition}_{_fm}_ssd.npy'), xfreq_ssd[j], allow_pickle=True)
-        np.save(os.path.join(srcs_itc_dir_files, f'epow_{condition}_{_fm}_ssd.npy'), epow_ssd[j], allow_pickle=True)
+    if 'ssd' in dim_red:
+        for j, _fm in enumerate(np.arange(1, 4.4, 0.5)):
+            np.save(os.path.join(srcs_itc_dir_files, f'itpc_{condition}_{_fm}_ssd.npy'), itpc_ssd[j], allow_pickle=True)
+            np.save(os.path.join(srcs_itc_dir_files, f'xfreq_{condition}_{_fm}_ssd.npy'), xfreq_ssd[j], allow_pickle=True)
+            np.save(os.path.join(srcs_itc_dir_files, f'epow_{condition}_{_fm}_ssd.npy'), epow_ssd[j], allow_pickle=True)
 
-if 'pca' in dim_red:
-    for j, _fm in enumerate(np.arange(1, 4.4, 0.5)):
-        np.save(os.path.join(srcs_itc_dir_files, f'itpc_{condition}_{_fm}_pca.npy'), itpc_pca[j], allow_pickle=True)
-        np.save(os.path.join(srcs_itc_dir_files, f'xfreq_{condition}_{_fm}_pca.npy'), xfreq_pca[j], allow_pickle=True)
-        np.save(os.path.join(srcs_itc_dir_files, f'epow_{condition}_{_fm}_pca.npy'), epow_pca[j], allow_pickle=True)
+    if 'pca' in dim_red:
+        for j, _fm in enumerate(np.arange(1, 4.4, 0.5)):
+            np.save(os.path.join(srcs_itc_dir_files, f'itpc_{condition}_{_fm}_pca.npy'), itpc_pca[j], allow_pickle=True)
+            np.save(os.path.join(srcs_itc_dir_files, f'xfreq_{condition}_{_fm}_pca.npy'), xfreq_pca[j], allow_pickle=True)
+            np.save(os.path.join(srcs_itc_dir_files, f'epow_{condition}_{_fm}_pca.npy'), epow_pca[j], allow_pickle=True)
