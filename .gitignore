@@ -3,7 +3,6 @@ datasets/data/
 datasets/preprocessed/
 .DS_Store
 datasets/.DS_Store
-notebooks/
 models/best_models/
 models/logs/
 notes/

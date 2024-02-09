@@ -1,5 +1,20 @@
-# Neuroflex
+# Neuroflex: Investigating Brain Interactions during Entrainment to Frequency Modulated Sounds
 
+## Overview
+Neuroflex is a Magnetoencephalography (MEG) study project focused on exploring the interactions between various brain regions when entrained to frequency-modulated sounds.
+
+## Data
+
+## Stimuli
+
+## Methods
+
+## Objectives
+- To map the brain's response patterns to frequency-modulated sounds.
+- To identify specific brain regions involved in the processing and entrainment to these sounds.
+- To understand the interaction and communication between different brain areas during auditory entrainment.
+
+## Getting Started
 
 ### check the analysis status
 from nf_tools import utils  
@@ -57,6 +72,8 @@ mne coreg
 ### Download Freesufer SUBJECTS_DIR from the server
 rsync -aux --include="subj*" keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/packages/freesurfer/subjects/ ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/fs_subjects_dir/
 
+rsync -aux --include="subj*" ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/fs_subjects_dir/ keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/packages/freesurfer/subjects/ 
+
 /hpc/workspace/2021-0292-NeuroFlex/packages/freesurfer/subjects
 
 
@@ -83,14 +100,54 @@ for i in range(15, 29):
     fm.mk_fwd_model(i, 'datasets')
 
 
+### Add atlas labels to the source space
+- Read the documentation
+cd notebooks/forward_modeling
+# Note that this schell script takes subject name as an argument
+./fm_5_add_brainnetome_parcelation.sh subj_16
+# Or write a for loop
+for i in {19..28}; do ./fm_5_add_brainnetome_parcelation.sh subj_${i}; done;
+# Check the results
+ls -l datasets/data/fs_subjects_dir/subj_*/label/*.BN_Atlas*
+
+# Plot atlas parcelation
+python fm_6_visualize_atlas.py
+
 
 ### SOURCE RECONSTRUCTION
 
-- should we do source recon separately on silence and entrainment?
-- how to calculate cov for different fms? as their length is not equal?
+- Apply source recon separately on silence and entrainment, and each of fms
 - Implement both LCMV and MNE
 - WHICH SSD
 - Sensor space ITC and Source space ITC
 
 
+### Make report
+conda activate mne
+cd reports
+for i in {26..28}; do python mk_report.py --id ${i};done;
 
+
+
+
+### Sync data with the server
+rsync -aux --include="subj*" keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/packages/freesurfer/subjects/ ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/fs_subjects_dir/
+
+rsync -aux --include="subj*" ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/fs_subjects_dir/ keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/packages/freesurfer/subjects/ 
+
+
+/Users/keyvan.mahjoory/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/subj_4/mri/file-fwd.fif
+
+for i in {20..28}; do rsync -aux ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/mri/file-fwd.fif keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/mri/; echo  subj_${i} Uploaded!; done;
+
+rsync -aux ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/mri/file-fwd.fif keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/mri/
+
+# MEG files
+rsync -aux --include="after_ica*" ~/k1_analyses/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/meg/ keyvan.mahjoory@hpc-login://hpc/workspace/2021-0292-NeuroFlex/prj_neuroflex/neuroflex_analysis/datasets/data/subj_${i}/meg/
+
+for i in {20..28}; do echo subj_${i} Uploaded!; echo subj Uploaded!; done;
+
+
+# ITC for labels
+
+for
