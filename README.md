@@ -1,7 +1,7 @@
 # Neuroflex: Investigating Brain Interactions during Entrainment to Frequency Modulated Sounds
 
 ## Overview
-Neuroflex is a Magnetoencephalography (MEG) study project focused on exploring the interactions between various brain regions when entrained to frequency-modulated sounds.
+Neuroflex is a Magnetoencephalography (MEG) study project focused on exploring the interactions between various brain regions when entrained to frequency-modulated sounds..
 
 ## Data
 
