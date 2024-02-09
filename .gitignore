@@ -6,5 +6,6 @@ datasets/.DS_Store
 models/best_models/
 models/logs/
 notes/
+notebooks/
 reports/
 .vscode/
