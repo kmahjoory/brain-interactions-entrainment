@@ -3,21 +3,55 @@
 
 This is a Magnetoencephalography (MEG) study exploring the interactions between various brain regions when entrained to frequency-modulated sounds.
 
-## Objectives
+### Objectives
 
 - To map the brain's response patterns to frequency-modulated sounds.
 - To identify specific brain regions involved in the processing and entrainment to these sounds.
 - To understand the interaction and communication between different brain areas during auditory entrainment.
 
-## Data
-
-## Behavioral Paradigm
-
-## Stimuli
-
-## Methods
+### Data
+### Behavioral Paradigm
+### Stimuli
+### Methods
+### Results
 
 
+# Codes
+
+## Installation
+
+Clone the repository and and change the directory to the project folder:
+```bash
+git clone https://github.com/kmahjoory/brain-interactions-entrainment.git
+cd brain-interactions-entrainment
+```
+Create a virtual environment named "myenv" using the Python module "venv" and activate it:
+```bash
+python -m venv "myenv"
+source myenv/bin/activate
+```
+Install the required packages using pip and check the installed packages:
+```bash
+pip install -r requirements.txt
+pip list
+```
+
+## Datasets
+
+## Organization of the project folder
+```plaintext
+brain-interactions-entrainment/
+├── src/                  
+│   ├── forward/              
+│   ├── inverse/               
+│ 
+├── experiments/                    
+│
+├── datasets
+│   ├── preprocessed/
+│
+├── notebooks/              
+```
 ## MEG Proprecessing Pipeline
 ```python
 ### Annotate blocks based on Behavioral data and MEG stimulus channel
