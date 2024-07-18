@@ -1,5 +1,6 @@
 
-# Brain Interactions during Entrainment to Frequency Modulated Sounds
+
+# <span style="color: blue;">Brain Interactions during Entrainment to Frequency Modulated Sounds</span>
 
 This is a Magnetoencephalography (MEG) study exploring the interactions between various brain regions when entrained to frequency-modulated sounds.
 
@@ -16,8 +17,8 @@ This is a Magnetoencephalography (MEG) study exploring the interactions between 
 ### Results
 
 
-# Codes
 
+# <span style="color: blue;">Codes</span>
 ## Installation
 
 Clone the repository and and change the directory to the project folder:
