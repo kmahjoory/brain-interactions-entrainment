@@ -6,16 +6,15 @@ This is a Magnetoencephalography (MEG) study exploring the interactions between 
 
 ### Objectives
 
-- To map the brain's response patterns to frequency-modulated sounds.
-- To identify specific brain regions involved in the processing and entrainment to these sounds.
-- To understand the interaction and communication between different brain areas during auditory entrainment.
+- **To identify brain regions involved in the entrainment to frequency-modulated sounds.**
+- **To understand the interactions between different brain areas during entrainment to different frequency-modulated sounds..**
 
-### Data
+<!-- ### Data
 ### Behavioral Paradigm
 ### Stimuli
 ### Methods
 ### Results
-
+-->
 
 
 **********
@@ -130,7 +129,12 @@ python fm_6_visualize_atlas.py
 
 ### SOURCE RECONSTRUCTION
 
-- Apply source recon separately on silence and entrainment, and each of fms
-- Implement both LCMV and MNE
-- WHICH SSD
-- Sensor space ITC and Source space ITC
+```python
+# Run source reconstruction and extract time series for each brain region
+python notebooks/source_reconstruction.py
+
+# Run source reconstruction and obtain Inter-trial coherence (ITC) between Primary Auditory Cortex and other brain regions
+python notebooks/source_reconstruction_itc.py
+
+
+```
